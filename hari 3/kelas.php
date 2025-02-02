@@ -1,10 +1,25 @@
 <?php
 include 'koneksi.php';
 
+// Pagination
+$limit = 5;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$start = ($page - 1) * $limit;
+
+// Pencarian
+$search = isset($_GET['search']) ? $_GET['search'] : '';
+$search_query = $search ? "WHERE nama_kelas LIKE '%$search%'" : '';
+
 // Ambil data kelas
-$query = "SELECT * FROM kelas $search_query";
+$query = "SELECT * FROM kelas $search_query LIMIT $start, $limit";
 $result = mysqli_query($koneksi, $query);
 
+// Hitung total data untuk pagination
+$total_query = "SELECT COUNT(*) AS total FROM kelas $search_query";
+$total_result = mysqli_query($koneksi, $total_query);
+$total_row = mysqli_fetch_assoc($total_result);
+$total = $total_row['total'];
+$total_pages = ceil($total / $limit);
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -42,7 +57,26 @@ $result = mysqli_query($koneksi, $query);
                         <td><?php echo $row['nama_kelas']; ?></td>
                         <td>
                             <a href="edit_kelas.php?id=<?php echo $row['id_kelas']; ?>" class="btn btn-warning btn-sm">Edit</a>
-                            <a href="hapus_kelas.php?id=<?php echo $row['id_siswa']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Yakin ingin menghapus?');">Hapus</a>
+                            <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDelete<?php echo $row['id_kelas']; ?>">Hapus</button>
+
+                            <!-- Modal Konfirmasi Hapus -->
+                            <div class="modal fade" id="confirmDelete<?php echo $row['id_kelas']; ?>" tabindex="-1" aria-labelledby="modalLabel<?php echo $row['id_kelas']; ?>" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="modalLabel<?php echo $row['id_kelas']; ?>">Konfirmasi Hapus</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Apakah Anda yakin ingin menghapus kelas <?php echo $row['nama_kelas']; ?>?
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                            <a href="hapus_kelas.php?id=<?php echo $row['id_kelas']; ?>" class="btn btn-danger">Hapus</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 <?php endwhile; ?>
